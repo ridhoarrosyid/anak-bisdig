@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
+import ProductModel from "./models/ProductModel.js";
 
 dotenv.config();
 
@@ -23,8 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 //   }
 // })();
 
-app.get("/health", (req, res) => {
-  console.log(req.headers);
+app.get("/", async (req, res) => {
   res.status(200).send("Server is running");
 });
 
