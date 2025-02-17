@@ -8,6 +8,6 @@ const suggestionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Suggestion = mongoose.Model("Suggestion", suggestionSchema);
+const SuggestionModel = mongoose.model("Suggestion", suggestionSchema);
 
-export default Suggestion;
+export default SuggestionModel;

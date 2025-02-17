@@ -2,7 +2,16 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
-import ProductModel from "./models/ProductModel.js";
+import productRoute from "./controllers/ProductController.js";
+import projectRoute from "./controllers/ProjectController.js";
+import suggestionRoute from "./controllers/SuggenstionController.js";
+import purchaseRouter from "./controllers/PurchaseController.js";
+import authRouter from "./controllers/AuthController.js";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+import UserModel from "./models/UserModel.js";
+import authMiddleware from "./middleware/pageAuthMiddleware.js";
+import { AllowAPI } from "./utils/constanta.js";
 
 dotenv.config();
 
@@ -11,22 +20,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+// app.use();
 
-// const uri: string =
-//   process.env.MONGODB_URI || "mongodb://localhost:27017/your-app";
-
-// (async () => {
-//   try {
-//     await mongoose.connect(uri);
-//     console.log("Connected to the database");
-//   } catch (error) {
-//     console.error(error);
-//   }
-// })();
-
-app.get("/", async (req, res) => {
-  res.status(200).send("Server is running");
-});
+app.use("/api/products", productRoute);
+app.use("/api/projects", projectRoute);
+app.use("/api/suggestion", suggestionRoute);
+app.use("/api/purchases", purchaseRouter);
+app.use("/api/auth", authRouter);
 
 const PORT = process.env.PORT || 3000;
 

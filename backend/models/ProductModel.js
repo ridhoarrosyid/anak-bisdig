@@ -23,6 +23,11 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    publish: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   {
     timestamps: true,

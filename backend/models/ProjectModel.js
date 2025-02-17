@@ -23,11 +23,16 @@ const projectSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    publish: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Project = mongoose.model("Project", projectSchema);
-export default Project;
+const ProjectModel = mongoose.model("Project", projectSchema);
+export default ProjectModel;
