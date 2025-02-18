@@ -7,12 +7,12 @@ const apiAuthMiddleware = async (req, res, next) => {
   if (!token) return res.json({ status: false });
   jwt.verify(token, process.env.TOKEN_KEY, async (err, data) => {
     if (err) {
-      return res.json({ success: false });
+      return res.json({ success: false, message: "token unverify" });
     }
     try {
       const user = await UserModel.findById(data.id);
       if (!user) {
-        return res.json({ success: false });
+        return res.json({ success: false, message: "user not found" });
       }
 
       const allow = AllowAPI.find(
@@ -21,7 +21,8 @@ const apiAuthMiddleware = async (req, res, next) => {
           el.method === req.method &&
           el.role.includes(user.role)
       );
-      if (!allow) return res.send({ success: false, step: "allow if", allow });
+      if (!allow) return res.send({ success: false, message: "not allow" });
+      res.locals.user = user;
       next();
     } catch (err) {
       console.log(err);

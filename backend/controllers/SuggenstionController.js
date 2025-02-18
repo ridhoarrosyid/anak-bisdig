@@ -1,6 +1,7 @@
 import express from "express";
 import SuggestionModel from "../models/SugestionModel.js";
 import mongoose from "mongoose";
+import apiAuthMiddleware from "../middleware/apiAuthMiddleware.js";
 
 const suggestionRoute = express.Router();
 
@@ -22,11 +23,14 @@ suggestionRoute.get("/", async (req, res) => {
   }
 });
 
-suggestionRoute.post("/", async (req, res) => {
+suggestionRoute.post("/", apiAuthMiddleware, async (req, res) => {
   const { suggestion } = req.body;
   if (!suggestion)
     return res.status(400).send({ message: "suggestion field required" });
-  const newSuggestion = new SuggestionModel({ suggestion });
+  const newSuggestion = new SuggestionModel({
+    user_id: res.locals.user._id,
+    suggestion,
+  });
   try {
     newSuggestion.save();
     res.status(201).send({ data: newSuggestion });
@@ -36,7 +40,7 @@ suggestionRoute.post("/", async (req, res) => {
   }
 });
 
-suggestionRoute.patch("/:id", async (req, res) => {
+suggestionRoute.patch("/:id", apiAuthMiddleware, async (req, res) => {
   const { suggestion } = req.body;
   const id = req.params.id;
   if (!mongoose.isValidObjectId(id))
@@ -48,7 +52,7 @@ suggestionRoute.patch("/:id", async (req, res) => {
       id,
       req.body,
       { runValidators: true, new: true }
-    );
+    ).where(user_id, res.locals.user._id);
     if (!editSuggestion)
       return res.status(404).send({ message: "id not found" });
     res.status(200).send({ data: editSuggestion });
@@ -58,12 +62,15 @@ suggestionRoute.patch("/:id", async (req, res) => {
   }
 });
 
-suggestionRoute.delete("/:id", async (req, res) => {
+suggestionRoute.delete("/:id", apiAuthMiddleware, async (req, res) => {
   const id = req.params.id;
   if (!mongoose.isValidObjectId(id))
     return res.status(400).send({ message: "id is not valid" });
   try {
-    const deleteSuggestion = await SuggestionModel.findByIdAndDelete(id);
+    const deleteSuggestion = await SuggestionModel.findByIdAndDelete(id).where(
+      user_id,
+      res.locals.user._id
+    );
     if (!deleteSuggestion)
       return res
         .status(404)
