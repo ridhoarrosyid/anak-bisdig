@@ -5,6 +5,7 @@ import Home from "./pages/Home.tsx";
 import { BrowserRouter, Route, Routes } from "react-router";
 import Login from "./pages/Login.tsx";
 import SignUp from "./pages/SignUp.tsx";
+import ManageProduct from "./pages/ManageProduct.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -13,6 +14,9 @@ createRoot(document.getElementById("root")!).render(
         <Route index element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/dashboard">
+          <Route path="products" element={<ManageProduct />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>,
