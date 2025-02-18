@@ -5,21 +5,36 @@ import apiAuthMiddleware from "../middleware/apiAuthMiddleware.js";
 
 const productRoute = express.Router();
 
-productRoute.get("/", apiAuthMiddleware, async (req, res) => {
+productRoute.get("/", async (req, res) => {
   try {
-    const products = await ProductModel.find();
+    const products = await ProductModel.find().where(publish, true);
+    if (products.length === 0)
+      return res.status(404).send({ message: "product not found" });
+    res.status(200).send({ data: products });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ message: "server error" });
+  }
+});
+
+productRoute.get("/myproduct", apiAuthMiddleware, async (req, res) => {
+  const user = res.locals.user;
+  try {
+    console.log(user._id);
+    const products = await ProductModel.find().where("user_id", user._id);
     if (products.length === 0)
       return res.status(404).send({ message: "product not found" });
     res.status(200).send({ data: products });
   } catch (err) {
     console.log(err.message);
-    res.status(500).send({ message: "server error" });
+    res.status(200).send({ message: "server error" });
   }
 });
 
 productRoute.get("/get3", async (req, res) => {
   try {
     const products = await ProductModel.aggregate([
+      { $match: { publish: true } },
       { $sample: { size: 3 } },
       { $project: { description: 0 } },
     ]);
@@ -39,7 +54,10 @@ productRoute.get("/:id", async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id))
     return res.status(400).send({ message: "id tidak valid" });
   try {
-    const product = await ProductModel.findById(req.params.id);
+    const product = await ProductModel.findById(req.params.id).where(
+      publish,
+      true
+    );
     if (!product) {
       return res.status(404).send({ message: "Product not found" });
     }
@@ -50,7 +68,7 @@ productRoute.get("/:id", async (req, res) => {
   }
 });
 
-productRoute.post("/", async (req, res) => {
+productRoute.post("/", apiAuthMiddleware, async (req, res) => {
   const field = Object.values(req.body);
 
   field.map((e) => {
@@ -59,6 +77,7 @@ productRoute.post("/", async (req, res) => {
     }
   });
   const newProduct = new ProductModel({
+    user_id: res.locals.user._id,
     name: req.body.name,
     description: req.body.description,
     image: req.body.image,
@@ -73,7 +92,7 @@ productRoute.post("/", async (req, res) => {
   }
 });
 
-productRoute.patch("/:id/", async (req, res) => {
+productRoute.patch("/:id/", apiAuthMiddleware, async (req, res) => {
   const { name, description, image, price } = req.body;
   const productId = req.params.id;
 
@@ -92,7 +111,7 @@ productRoute.patch("/:id/", async (req, res) => {
         new: true,
         runValidators: true,
       }
-    );
+    ).where("user_id", res.locals.user._id);
     if (!updateProduct) {
       return res
         .status(404)
@@ -105,13 +124,16 @@ productRoute.patch("/:id/", async (req, res) => {
   }
 });
 
-productRoute.delete("/:id/", async (req, res) => {
+productRoute.delete("/:id/", apiAuthMiddleware, async (req, res) => {
   const productId = req.params.id;
   if (!mongoose.isValidObjectId(productId))
     return res.status(400).send({ message: "format id tidak valid" });
 
   try {
-    const deleteProduct = await ProductModel.findByIdAndDelete(productId);
+    const deleteProduct = await ProductModel.findByIdAndDelete(productId).where(
+      "user_id",
+      res.locals.user._id
+    );
     if (!deleteProduct) {
       return res
         .status(404)

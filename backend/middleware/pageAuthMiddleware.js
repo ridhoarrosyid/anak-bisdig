@@ -1,22 +1,21 @@
 import jwt from "jsonwebtoken";
 import UserModel from "../models/UserModel.js";
 
-const authMiddleware = async (req, res, next) => {
+const pageAuthMiddleware = async (req, res) => {
   const token = req.cookies.token;
-  if (!token) return res.json({ status: false });
+  if (!token) return res.json({ status: false, message: "there's no token" });
   jwt.verify(token, process.env.TOKEN_KEY, async (err, data) => {
     if (err) {
-      return res.json({ success: false });
+      return res.json({ success: false, message: "token invalid" });
     } else {
-      const user = UserModel.findById(data.id);
+      const user = await UserModel.findById(data.id);
       if (user) {
-        next();
-        return res.json({ status: true, user: user.email });
+        return res.json({ success: true, email: user.email });
       } else {
-        return res.json({ success: false });
+        return res.json({ success: false, message: "user not found" });
       }
     }
   });
 };
 
-export default authMiddleware;
+export default pageAuthMiddleware;

@@ -10,12 +10,16 @@ projectRoute.get("/", async (req, res) => {
     if (projects.length === 0)
       return res.status(404).send({ message: "project not found" });
     res.status(200).send({ data: projects });
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ message: "server error" });
+  }
 });
 
 projectRoute.get("/get3", async (req, res) => {
   try {
     const projects = await ProjectModel.aggregate([
+      { $match: { publish: true } },
       { $sample: { size: 3 } },
       { $project: { description: 0 } },
     ]);
@@ -32,7 +36,10 @@ projectRoute.get("/:id", async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id))
     return res.status(400).send({ message: "invalid id format" });
   try {
-    const project = await ProjectModel.findById(req.params.id);
+    const project = await ProjectModel.findById(req.params.id).where(
+      "publish",
+      true
+    );
     if (!project) return res.status(404).send({ message: "object not found" });
     res.status(200).send({ data: project });
   } catch (e) {

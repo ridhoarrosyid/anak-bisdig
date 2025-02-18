@@ -44,9 +44,11 @@ authRouter.post("/login", async (req, res) => {
     const auth = await bcrypt.compare(password, user.password);
     if (!auth) return res.status(400).send({ message: "password incorect" });
     const token = createSecretToken(user._id);
-    res.cookie("token", token, { httpOnly: false, withCredentials: true });
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: false,
+    });
     res.status(201).send({ message: "user logged successfully" });
-    next();
   } catch (err) {
     console.log(err.message);
     res.status(500).send({ message: "server error" });
