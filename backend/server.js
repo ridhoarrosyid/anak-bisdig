@@ -12,12 +12,13 @@ import jwt from "jsonwebtoken";
 import UserModel from "./models/UserModel.js";
 import authMiddleware from "./middleware/pageAuthMiddleware.js";
 import { AllowAPI } from "./utils/constanta.js";
+import pageAuthMiddleware from "./middleware/pageAuthMiddleware.js";
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -28,6 +29,7 @@ app.use("/api/projects", projectRoute);
 app.use("/api/suggestion", suggestionRoute);
 app.use("/api/purchases", purchaseRouter);
 app.use("/api/auth", authRouter);
+app.get("/pageauth", pageAuthMiddleware);
 
 const PORT = process.env.PORT || 3000;
 
