@@ -6,20 +6,37 @@ import {
   loginFormScheme,
   signupFormScheme,
 } from "./formSchema";
+import { useNavigate } from "react-router";
+import { useToast } from "@/hooks/use-toast";
 
 export function useFeedbackForm(): [
   UseFormReturn<z.infer<typeof feedbackFormScheme>>,
   (value: TypeOf<typeof feedbackFormScheme>) => void,
 ] {
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof feedbackFormScheme>>({
     resolver: zodResolver(feedbackFormScheme),
     defaultValues: {
-      feedback: "",
+      suggestion: "",
     },
   });
-  function onSubmit(value: z.infer<typeof feedbackFormScheme>) {
-    alert("feedback nya " + value.feedback);
-    form.reset({ feedback: "" });
+  async function onSubmit(value: z.infer<typeof feedbackFormScheme>) {
+    try {
+      const res = await fetch("http://localhost:3000/api/suggestion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(value),
+        credentials: "include",
+        redirect: "follow",
+      }).then((res) => res.json());
+      form.reset();
+      toast({
+        title: res.message,
+        description: res.data.suggestion,
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
   return [form, onSubmit];
 }
@@ -28,6 +45,7 @@ export function useLoginForm(): [
   UseFormReturn<z.infer<typeof loginFormScheme>>,
   (value: TypeOf<typeof loginFormScheme>) => void,
 ] {
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof loginFormScheme>>({
     resolver: zodResolver(loginFormScheme),
     defaultValues: {
@@ -46,6 +64,7 @@ export function useLoginForm(): [
         credentials: "include",
       }).then((res) => res.json());
       alert(data.message);
+      navigate("/dashboard/products");
     } catch (err) {
       console.log(err);
     }

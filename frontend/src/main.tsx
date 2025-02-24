@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import Login from "./pages/Login.tsx";
 import SignUp from "./pages/SignUp.tsx";
 import ManageProduct from "./pages/ManageProduct.tsx";
+import { Toaster } from "./components/ui/toaster.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="products" element={<ManageProduct />} />
         </Route>
       </Routes>
+      <Toaster />
     </BrowserRouter>
   </StrictMode>,
 );

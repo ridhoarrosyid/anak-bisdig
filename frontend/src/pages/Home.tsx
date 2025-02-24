@@ -14,13 +14,53 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFeedbackForm } from "@/lib/formHandler";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 export default function Home() {
   const [feedBackForm, onSubmitFeedBack] = useFeedbackForm();
+  const [products, setProducts] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [gallery, setGallery] = useState([]);
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const res = await fetch("http://localhost:3000/api/products/get3", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          redirect: "follow",
+          credentials: "include",
+        }).then((res) => res.json());
+        console.log(res.data);
+        setProducts(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    fetchProduct();
+  }, []);
+
+  // const [user, setUser] = useState(); KEMUNGKINAN TIDAK DIBUTUHKAN
+
+  // useEffect(() => {
+  //   const verifyToken = async () => {
+  //     try {
+  //       const res = await fetch("http://localhost:3000/pageauth", {
+  //         method: "GET",
+  //         headers: { "Content-Type": "Application/json" },
+  //         redirect: "follow",
+  //         credentials: "include",
+  //       }).then((res) => res.json());
+  //       setUser(res.data);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   verifyToken();
+  // });
   return (
     <>
       <nav className="flex items-center justify-between bg-blue-200 px-4 py-2">
@@ -57,28 +97,6 @@ export default function Home() {
             <Button asChild size="sm">
               <Link to="#">Lihat Project</Link>
             </Button>
-          </div>
-          <div>
-            <p>Kalo ada drop saranmu dibawah ya</p>
-            <Form {...feedBackForm}>
-              <form onSubmit={feedBackForm.handleSubmit(onSubmitFeedBack)}>
-                <FormField
-                  control={feedBackForm.control}
-                  name="feedback"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input placeholder="menurut saya..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button size="sm" type="submit">
-                  Kirim Saran
-                </Button>
-              </form>
-            </Form>
           </div>
         </section>
         <section>
@@ -120,7 +138,7 @@ export default function Home() {
             <form onSubmit={feedBackForm.handleSubmit(onSubmitFeedBack)}>
               <FormField
                 control={feedBackForm.control}
-                name="feedback"
+                name="suggestion"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
