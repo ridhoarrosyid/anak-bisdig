@@ -16,14 +16,14 @@ export const AllowAPI = [
   },
 
   {
-    baseUrl: "",
-    method: "",
-    role: [],
+    baseUrl: "/api/products/myproduct",
+    method: "GET",
+    role: ["user", "admin"],
   },
   {
-    baseUrl: "",
-    method: "",
-    role: [],
+    baseUrl: "/api/suggestion",
+    method: "POST",
+    role: ["user", "admin"],
   },
   {
     baseUrl: "",

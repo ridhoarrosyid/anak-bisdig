@@ -4,10 +4,10 @@ import { AllowAPI } from "../utils/constanta.js";
 
 const apiAuthMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
-  if (!token) return res.json({ status: false });
+  if (!token) return res.json({ success: false, messagge: "token not found" });
   jwt.verify(token, process.env.TOKEN_KEY, async (err, data) => {
     if (err) {
-      return res.json({ success: false, message: "token unverify" });
+      return res.json({ success: false, message: "token invalid" });
     }
     try {
       const user = await UserModel.findById(data.id);
@@ -26,7 +26,7 @@ const apiAuthMiddleware = async (req, res, next) => {
       next();
     } catch (err) {
       console.log(err);
-      return res.send({ message: "server error" }).status(500);
+      return res.send({ success: false, message: "server error" }).status(500);
     }
   });
 };
