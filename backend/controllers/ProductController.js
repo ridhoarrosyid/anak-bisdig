@@ -20,10 +20,9 @@ productRoute.get("/", async (req, res) => {
 productRoute.get("/myproduct", apiAuthMiddleware, async (req, res) => {
   const user = res.locals.user;
   try {
-    console.log(user._id);
     const products = await ProductModel.find().where("user_id", user._id);
     if (products.length === 0)
-      return res.status(404).send({ message: "product not found" });
+      return res.status(404).send({ message: "product not found", data: [] });
     res.status(200).send({ data: products });
   } catch (err) {
     console.log(err.message);
@@ -36,17 +35,17 @@ productRoute.get("/get3", async (req, res) => {
     const products = await ProductModel.aggregate([
       { $match: { publish: true } },
       { $sample: { size: 3 } },
-      { $project: { description: 0 } },
+      { $project: { name: 1, image: 1, price: 1, _id: 1, description: 1 } },
     ]);
     if (products.length === 0)
-      return res.status(404).send({ message: "tidak ada product" });
+      return res
+        .status(404)
+        .send({ message: "tidak ada product", success: false });
 
-    res.status(200).send({
-      data: products,
-    });
+    res.status(200).send({ success: true, data: products });
   } catch (e) {
     console.error(e.message);
-    res.status(500).send({ message: "server error" });
+    res.status(500).send({ success: false, message: "server error" });
   }
 });
 
@@ -73,7 +72,9 @@ productRoute.post("/", apiAuthMiddleware, async (req, res) => {
 
   field.map((e) => {
     if (!e) {
-      return res.status(400).send({ message: `${e} cant be empty` });
+      return res
+        .status(400)
+        .send({ success: false, message: `${e} cant be empty` });
     }
   });
   const newProduct = new ProductModel({
@@ -85,10 +86,10 @@ productRoute.post("/", apiAuthMiddleware, async (req, res) => {
   });
   try {
     await newProduct.save();
-    res.status(200).send({ data: newProduct });
+    res.status(200).send({ success: true, data: newProduct });
   } catch (e) {
     console.log(e.message);
-    res.status(500).send({ message: "server error" });
+    res.status(500).send({ success: true, message: "server error" });
   }
 });
 

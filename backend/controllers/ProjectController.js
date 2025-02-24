@@ -21,14 +21,16 @@ projectRoute.get("/get3", async (req, res) => {
     const projects = await ProjectModel.aggregate([
       { $match: { publish: true } },
       { $sample: { size: 3 } },
-      { $project: { description: 0 } },
+      { $project: { _id: 1, name: 1, description: 1, image: 1, link: 1 } },
     ]);
     if (projects.length === 0)
-      return res.status(404).send({ message: "data not found" });
-    res.status(200).send({ data: { projects } });
+      return res
+        .status(404)
+        .send({ success: false, message: "data not found" });
+    res.status(200).send({ success: true, data: { projects } });
   } catch (e) {
     console.error(e.message);
-    res.status(500).send({ message: "internal server error" });
+    res.status(500).send({ success: false, message: "internal server error" });
   }
 });
 

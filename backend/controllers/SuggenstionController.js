@@ -26,14 +26,22 @@ suggestionRoute.get("/", async (req, res) => {
 suggestionRoute.post("/", apiAuthMiddleware, async (req, res) => {
   const { suggestion } = req.body;
   if (!suggestion)
-    return res.status(400).send({ message: "suggestion field required" });
+    return res
+      .status(400)
+      .send({ success: false, message: "suggestion field required" });
   const newSuggestion = new SuggestionModel({
     user_id: res.locals.user._id,
     suggestion,
   });
   try {
     newSuggestion.save();
-    res.status(201).send({ data: newSuggestion });
+    res
+      .status(201)
+      .send({
+        success: true,
+        message: "add suggestion success",
+        data: newSuggestion,
+      });
   } catch (err) {
     console.error(err.message);
     res.status(500).send({ message: "server error" });
