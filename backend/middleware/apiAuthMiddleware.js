@@ -22,6 +22,7 @@ const apiAuthMiddleware = async (req, res, next) => {
           el.role.includes(user.role)
       );
       if (!allow) return res.send({ success: false, message: "not allow" });
+      req.user = user;
       res.locals.user = user;
       next();
     } catch (err) {

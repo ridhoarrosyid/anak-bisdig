@@ -2,6 +2,10 @@ import express from "express";
 import ProductModel from "../models/ProductModel.js";
 import mongoose from "mongoose";
 import apiAuthMiddleware from "../middleware/apiAuthMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 const productRoute = express.Router();
 
@@ -67,63 +71,96 @@ productRoute.get("/:id", async (req, res) => {
   }
 });
 
-productRoute.post("/", apiAuthMiddleware, async (req, res) => {
-  const field = Object.values(req.body);
+productRoute.post(
+  "/",
+  apiAuthMiddleware,
+  upload.single("image"),
+  async (req, res) => {
+    const field = Object.values(req.body);
 
-  field.map((e) => {
-    if (!e) {
+    field.map((e) => {
+      if (!e) {
+        return res
+          .status(400)
+          .send({ success: false, message: `${e} cant be empty` });
+      }
+    });
+
+    if (!req.file)
       return res
         .status(400)
-        .send({ success: false, message: `${e} cant be empty` });
-    }
-  });
-  const newProduct = new ProductModel({
-    user_id: res.locals.user._id,
-    name: req.body.name,
-    description: req.body.description,
-    image: req.body.image,
-    price: req.body.price,
-  });
-  try {
-    await newProduct.save();
-    res.status(200).send({ success: true, data: newProduct });
-  } catch (e) {
-    console.log(e.message);
-    res.status(500).send({ success: true, message: "server error" });
-  }
-});
+        .send({ success: false, message: "image is required" });
 
-productRoute.patch("/:id/", apiAuthMiddleware, async (req, res) => {
-  const { name, description, image, price } = req.body;
-  const productId = req.params.id;
-
-  if (!mongoose.isValidObjectId(productId))
-    return res.status(404).send({ message: "invalid id format" });
-
-  if (!name || !description || !image || !price)
-    return res.status(400).send({
-      message: "name, description, image, and price fields are required",
+    const newProduct = new ProductModel({
+      user_id: res.locals.user._id,
+      name: req.body.name,
+      description: req.body.description,
+      image: req.file.filename,
+      price: req.body.price,
     });
-  try {
-    const updateProduct = await ProductModel.findByIdAndUpdate(
-      productId,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).where("user_id", res.locals.user._id);
-    if (!updateProduct) {
-      return res
-        .status(404)
-        .send({ message: `Product with id ${productId} was not found` });
+    try {
+      await newProduct.save();
+      res.status(200).send({ success: true, data: newProduct });
+    } catch (e) {
+      console.log(e.message);
+      res.status(500).send({ success: true, message: "server error" });
     }
-    res.status(200).send({ data: { updateProduct } });
-  } catch (e) {
-    console.log(e.message);
-    res.status(500).send({ message: "server error" });
   }
-});
+);
+
+productRoute.patch(
+  "/:id/",
+  apiAuthMiddleware,
+  upload.single("image"),
+  async (req, res) => {
+    const { name, description, price } = req.body;
+    const newImage = req.file;
+    const productId = req.params.id;
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    if (!mongoose.isValidObjectId(productId))
+      return res.status(404).send({ message: "invalid id format" });
+
+    if (!name || !description || !price)
+      return res.status(400).send({
+        message: "name, description, and price fields are required",
+      });
+    try {
+      const oldProduct = await ProductModel.findById(productId);
+      if (newImage && oldProduct.image) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../files/photo",
+          oldProduct.image
+        );
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      const newData = newImage
+        ? { ...req.body, image: newImage.filename }
+        : req.body;
+      const updateProduct = await ProductModel.findByIdAndUpdate(
+        productId,
+        newData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      ).where("user_id", res.locals.user._id);
+      if (!updateProduct) {
+        return res
+          .status(404)
+          .send({ message: `Product with id ${productId} was not found` });
+      }
+      res.status(200).send({ data: { updateProduct } });
+    } catch (e) {
+      console.log(e.message);
+      res.status(500).send({ message: "server error" });
+    }
+  }
+);
 
 productRoute.delete("/:id/", apiAuthMiddleware, async (req, res) => {
   const productId = req.params.id;

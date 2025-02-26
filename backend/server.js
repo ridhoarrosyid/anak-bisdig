@@ -8,11 +8,8 @@ import suggestionRoute from "./controllers/SuggenstionController.js";
 import purchaseRouter from "./controllers/PurchaseController.js";
 import authRouter from "./controllers/AuthController.js";
 import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
-import UserModel from "./models/UserModel.js";
-import authMiddleware from "./middleware/pageAuthMiddleware.js";
-import { AllowAPI } from "./utils/constanta.js";
 import pageAuthMiddleware from "./middleware/pageAuthMiddleware.js";
+import fileRouter from "./controllers/FileController.js";
 
 dotenv.config();
 
@@ -29,6 +26,7 @@ app.use("/api/projects", projectRoute);
 app.use("/api/suggestion", suggestionRoute);
 app.use("/api/purchases", purchaseRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/files", fileRouter);
 app.get("/pageauth", pageAuthMiddleware);
 
 const PORT = process.env.PORT || 3000;

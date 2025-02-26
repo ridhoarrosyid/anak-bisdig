@@ -26,8 +26,13 @@ export const AllowAPI = [
     role: ["user", "admin"],
   },
   {
-    baseUrl: "",
-    method: "",
-    role: [],
+    baseUrl: "/api/files",
+    method: "GET",
+    role: ["user", "admin"],
+  },
+  {
+    baseUrl: "/api/products",
+    method: "PATCH",
+    role: ["user", "admin"],
   },
 ];
