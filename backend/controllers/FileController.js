@@ -12,7 +12,6 @@ fileRouter.get("/image/:filename", apiAuthMiddleware, async (req, res) => {
   const { filename } = req.params;
   const fileUser = filename.split("-")[0];
   const userVerified = res.locals.user._id.toString();
-  console.log(fileUser, res.locals.user._id.toString());
   if (fileUser !== userVerified)
     return res
       .status(400)

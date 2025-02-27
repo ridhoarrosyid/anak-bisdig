@@ -10,6 +10,11 @@ export const AllowAPI = [
     role: ["admin", "user"],
   },
   {
+    baseUrl: "/api/products",
+    method: "DELETE",
+    role: ["admin", "user"],
+  },
+  {
     baseUrl: "/api/suggestions",
     method: "POST",
     role: ["user"],

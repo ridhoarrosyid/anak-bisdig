@@ -6,6 +6,7 @@ import upload from "../middleware/uploadMiddleware.js";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import getOldData from "../middleware/getOldDataMiddleware.js";
 
 const productRoute = express.Router();
 
@@ -111,6 +112,7 @@ productRoute.post(
 productRoute.patch(
   "/:id/",
   apiAuthMiddleware,
+  getOldData,
   upload.single("image"),
   async (req, res) => {
     const { name, description, price } = req.body;
@@ -127,7 +129,7 @@ productRoute.patch(
         message: "name, description, and price fields are required",
       });
     try {
-      const oldProduct = await ProductModel.findById(productId);
+      const oldProduct = res.locals.oldData;
       if (newImage && oldProduct.image) {
         const oldImagePath = path.join(
           __dirname,
@@ -135,12 +137,14 @@ productRoute.patch(
           oldProduct.image
         );
         if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+          fs.unlink(oldImagePath, (err) => {
+            console.log(err);
+          });
         }
       }
       const newData = newImage
-        ? { ...req.body, image: newImage.filename }
-        : req.body;
+        ? { name, description, price, image: newImage.filename }
+        : { name, description, price };
       const updateProduct = await ProductModel.findByIdAndUpdate(
         productId,
         newData,
@@ -150,9 +154,10 @@ productRoute.patch(
         }
       ).where("user_id", res.locals.user._id);
       if (!updateProduct) {
-        return res
-          .status(404)
-          .send({ message: `Product with id ${productId} was not found` });
+        return res.status(404).send({
+          success: false,
+          message: `${name} was not found`,
+        });
       }
       res.status(200).send({ data: { updateProduct } });
     } catch (e) {
@@ -162,26 +167,44 @@ productRoute.patch(
   }
 );
 
-productRoute.delete("/:id/", apiAuthMiddleware, async (req, res) => {
-  const productId = req.params.id;
-  if (!mongoose.isValidObjectId(productId))
-    return res.status(400).send({ message: "format id tidak valid" });
+productRoute.delete(
+  "/:id/",
+  apiAuthMiddleware,
+  getOldData,
+  async (req, res) => {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const productId = req.params.id;
+    if (!mongoose.isValidObjectId(productId))
+      return res.status(400).send({ message: "format id tidak valid" });
 
-  try {
-    const deleteProduct = await ProductModel.findByIdAndDelete(productId).where(
-      "user_id",
-      res.locals.user._id
-    );
-    if (!deleteProduct) {
-      return res
-        .status(404)
-        .send({ message: `Product with id ${productId} was not found` });
+    try {
+      const oldProduct = res.locals.oldData;
+      if (oldProduct.image) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../files/photo",
+          oldProduct.image
+        );
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      const deleteProduct = await ProductModel.findByIdAndDelete(
+        productId
+      ).where("user_id", res.locals.user._id);
+      if (!deleteProduct) {
+        return res
+          .status(404)
+          .send({ message: `Product with id ${productId} was not found` });
+      }
+      res.status(200).send({ message: "product deleted" });
+    } catch (e) {
+      console.log(e.message);
+      res.status(500).send({ message: "server error" });
     }
-    res.status(200).send({ message: "product deleted" });
-  } catch (e) {
-    console.log(e.message);
-    res.status(500).send({ message: "server error" });
   }
-});
+);
 
 export default productRoute;

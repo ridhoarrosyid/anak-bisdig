@@ -22,8 +22,17 @@ const fileFilter = async (req, file, cb) => {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const oldPath = path.join(__dirname, "../files/photo", file.originalname);
+    const fileUser = req.oldData.user_id.toString();
+    const userVerified = req.user._id.toString();
+
+    if (fileUser !== userVerified) {
+      console.log(fileUser, userVerified);
+      cb(null, false);
+      return;
+    }
 
     if (fs.existsSync(oldPath)) {
+      console.log(2);
       cb(null, false);
       return;
     }
@@ -31,12 +40,16 @@ const fileFilter = async (req, file, cb) => {
 
   const mimeTypes = ["image/jpeg", "image/png"];
   if (mimeTypes.includes(file.mimetype)) {
+    console.log(3);
     cb(null, true);
+    return;
   } else {
+    console.log(4);
     cb(
       new Error("File type not Allowed. Only JPEG and PNG are accepted."),
       false
     );
+    return;
   }
 };
 

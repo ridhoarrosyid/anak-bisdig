@@ -10,6 +10,7 @@ import authRouter from "./controllers/AuthController.js";
 import cookieParser from "cookie-parser";
 import pageAuthMiddleware from "./middleware/pageAuthMiddleware.js";
 import fileRouter from "./controllers/FileController.js";
+import getOldData from "./middleware/getOldDataMiddleware.js";
 
 dotenv.config();
 
@@ -28,6 +29,9 @@ app.use("/api/purchases", purchaseRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/files", fileRouter);
 app.get("/pageauth", pageAuthMiddleware);
+app.get("/getoldata/halo/kenapa", async (req, res) => {
+  res.send(req.originalUrl);
+});
 
 const PORT = process.env.PORT || 3000;
 
