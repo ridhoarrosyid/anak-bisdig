@@ -12,7 +12,7 @@ const productRoute = express.Router();
 
 productRoute.get("/", async (req, res) => {
   try {
-    const products = await ProductModel.find().where(publish, true);
+    const products = await ProductModel.find().where("publish", true);
     if (products.length === 0)
       return res.status(404).send({ message: "product not found" });
     res.status(200).send({ data: products });
@@ -22,12 +22,14 @@ productRoute.get("/", async (req, res) => {
   }
 });
 
-productRoute.get("/myproduct", apiAuthMiddleware, async (req, res) => {
+productRoute.get("/myproducts", apiAuthMiddleware, async (req, res) => {
   const user = res.locals.user;
   try {
     const products = await ProductModel.find().where("user_id", user._id);
     if (products.length === 0)
-      return res.status(404).send({ message: "product not found", data: [] });
+      return res
+        .status(404)
+        .send({ success: false, message: "product not found", data: [] });
     res.status(200).send({ data: products });
   } catch (err) {
     console.log(err.message);
@@ -56,19 +58,21 @@ productRoute.get("/get3", async (req, res) => {
 
 productRoute.get("/:id", async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id))
-    return res.status(400).send({ message: "id tidak valid" });
+    return res.status(400).send({ success: false, message: "id tidak valid" });
   try {
     const product = await ProductModel.findById(req.params.id).where(
-      publish,
+      "publish",
       true
     );
     if (!product) {
-      return res.status(404).send({ message: "Product not found" });
+      return res
+        .status(404)
+        .send({ success: false, message: "Product not found" });
     }
-    res.status(200).send({ data: product });
+    res.status(200).send({ success: true, data: product });
   } catch (e) {
     console.error(e.message);
-    res.status(500).send({ message: "server error" });
+    res.status(500).send({ success: false, message: "server error" });
   }
 });
 
@@ -120,12 +124,17 @@ productRoute.patch(
     const productId = req.params.id;
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
+    const userVerified = res.locals.user._id.toString();
+    const fileUser = res.locals.oldData.user_id.toString();
 
     if (!mongoose.isValidObjectId(productId))
-      return res.status(404).send({ message: "invalid id format" });
+      return res
+        .status(404)
+        .send({ success: false, message: "invalid id format" });
 
     if (!name || !description || !price)
       return res.status(400).send({
+        success: false,
         message: "name, description, and price fields are required",
       });
     try {
@@ -136,7 +145,7 @@ productRoute.patch(
           "../files/photo",
           oldProduct.image
         );
-        if (fs.existsSync(oldImagePath)) {
+        if (fs.existsSync(oldImagePath) && fileUser === userVerified) {
           fs.unlink(oldImagePath, (err) => {
             console.log(err);
           });
@@ -152,17 +161,17 @@ productRoute.patch(
           new: true,
           runValidators: true,
         }
-      ).where("user_id", res.locals.user._id);
+      ).where("user_id", user._id);
       if (!updateProduct) {
         return res.status(404).send({
           success: false,
           message: `${name} was not found`,
         });
       }
-      res.status(200).send({ data: { updateProduct } });
+      res.status(200).send({ success: true, data: updateProduct });
     } catch (e) {
       console.log(e.message);
-      res.status(500).send({ message: "server error" });
+      res.status(500).send({ success: false, message: "server error" });
     }
   }
 );
@@ -175,8 +184,12 @@ productRoute.delete(
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const productId = req.params.id;
+    const fileUser = res.locals.oldData.user_id.toString();
+    const userVerified = res.locals.user._id.toString();
     if (!mongoose.isValidObjectId(productId))
-      return res.status(400).send({ message: "format id tidak valid" });
+      return res
+        .status(400)
+        .send({ success: false, message: "format id tidak valid" });
 
     try {
       const oldProduct = res.locals.oldData;
@@ -186,7 +199,7 @@ productRoute.delete(
           "../files/photo",
           oldProduct.image
         );
-        if (fs.existsSync(oldImagePath)) {
+        if (fs.existsSync(oldImagePath) && userVerified === fileUser) {
           fs.unlinkSync(oldImagePath);
         }
       }
@@ -195,9 +208,10 @@ productRoute.delete(
         productId
       ).where("user_id", res.locals.user._id);
       if (!deleteProduct) {
-        return res
-          .status(404)
-          .send({ message: `Product with id ${productId} was not found` });
+        return res.status(404).send({
+          success: false,
+          message: `Product with id ${productId} was not found`,
+        });
       }
       res.status(200).send({ message: "product deleted" });
     } catch (e) {
